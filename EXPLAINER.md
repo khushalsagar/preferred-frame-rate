@@ -28,5 +28,13 @@ The API allows the developer to provide 2 parameters to indicate their frame rat
 Once a preference is specified, the browser will schedule rendering lifecycle updates in response to DOM mutations and dispatch of requestAnimationFrame at a rate as close as possible to the specified rate. But it is important to note that this is a performance hint and not a guarentee.
 
 ## Open Questions
-* Should this preference also apply to UA driven animations and input processing (scrolling, pinch zoom)?
-* Should this preference apply to fixed rate video playback?
+Its not clear how this frame rate preference should affect other content animations such as:
+* Input gestures, primarily scrolling/pinch zoom.
+* Fixed rate video playback.
+* Offscreen canvas requestAnimationFrame on a worker thread.
+
+## Non Goals
+The web also lacks APIs for a developer to query the refresh rate capabilities of the user's physical display. The most common way to infer this is by observing the rate of requestAnimationFrame callbacks. It seems ergonomic to provide APIs to explicitly query this info, similar to other [screen](https://developer.mozilla.org/en-US/docs/Web/API/Window/screen) properties.
+
+## References
+The API proposed here draws heavily from similar APIs on other platforms including the [preferredFramesPerSecond](https://developer.apple.com/documentation/quartzcore/cadisplaylink/1648421-preferredframespersecond) property on Mac and [setFrameRate](https://developer.android.com/ndk/reference/group/a-native-window#anativewindow_setframerate) API on Android.
