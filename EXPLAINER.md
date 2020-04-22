@@ -25,7 +25,7 @@ The API allows the developer to provide 2 parameters to indicate their frame rat
 * The first is an int specifying the preferred frame rate value. A value of 0 implies that the desired frame rate is the max value supported by the display.
 * The second parameter is a string with 2 possible values: "lower" or "higher". It specifies whether the browser should pick a lower or higher value than the provided rate if needed. This is needed because the actual frame rate chosen by the browser could depend on multiple factors including the refresh rates supported by the physical display and the preferred frame rate of other content sources animating onscreen. This means that it may not be optimal to animate the page content at the exact provided rate and it needs to be adjusted.
 
-Once a preference is specified, the browser will schedule rendering lifecycle updates in response to DOM mutations and dispatch of requestAnimationFrame at a rate as close as possible to the specified rate. But it is important to note that this is a performance hint and not a guarentee.
+Once a preference is specified, the browser will schedule rendering lifecycle updates in response to DOM mutations and dispatch of requestAnimationFrame at a rate as close as possible to the specified rate. But it is important to note that this is a performance hint and not a guarantee.
 
 ## Open Questions
 Its not clear how this frame rate preference should affect other content animations such as:
