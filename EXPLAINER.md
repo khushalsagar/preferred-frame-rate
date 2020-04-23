@@ -37,21 +37,26 @@ Its not obvious whether updates for these animations should also be throttled, i
 
 * Decoupling an update to the DOM from a timer task vs a css animation may not be possible. For instance if ticking the animation mutates the same data structures as the DOM update. This means that a repaint for the css animation update is bound to display any changes made by script so far.
 
-* We could still throttle the dispatch of requestAnimationFrame while ticking the declarative animation at its instrinsic rate. But its not clear whether any optimization opportunities for a use-case like this would justify the implementation complexity involved. 
+* We could still throttle the dispatch of requestAnimationFrame callbacks while ticking the declarative animation at its instrinsic rate. But there don't seem to be any optimization opportunities for a use-case like this that would justify the implementation complexity involved. It is important to note that not supporting this use-case is not a functional limitation, the page can still use existing mechanisms to simultaneously perform script driven and declarative animations at a different rate.
 
 ### Input Gestures
-This includes input gestures which are processed by the browser, primarily scrolling/pinch zoom. This is fundamentally different from declarative animations in that it is not initiated by the page.
+This includes input gestures which are processed by the browser, primarily scrolling/pinch zoom. It is likely that in most cases where this API is used, the intent would not be to throttle the frame rate for these gestures. This makes it tricky to decide how this preference should impact processing of these gestures. A few considerations are mentioned below:
 
-## RAF on Workers
-Another area which would warrant some discussion is of requestAnimationFrame based animations on worker threads, such as an offscreen canvas.
+* Assume that it should never apply during an input gesture and fallback to the default behaviour. This would generally mean that all animations start getting ticked at the max refresh rate.
 
-Its not clear how this frame rate preference should affect other content animations such as:
-* Input gestures, primarily scrolling/pinch zoom.
-* Fixed rate video playback.
-* Offscreen canvas requestAnimationFrame on a worker thread.
+* Assume that it should always apply. The page needs to register event handlers to remove the preference if it is not desirable to throttle the rate of these animations. This seems less preferable since it could increase the latency of gesture start. Its also not clear how easy it is to observe all browser driven gestures from script (like pinch-zoom, double tap zoom, etc.)
+
+* Provide an additional option in the API to let the page specify their preference. This seems like the most flexible option.
+
+However, one aspect of this case is similar to the declarative animations case, the preference should apply uniformly to all animations on the page for the same reasons as mentioned above.
+
 
 ## Non Goals
-The web also lacks APIs for a developer to query the refresh rate capabilities of the user's physical display. The most common way to infer this is by observing the rate of requestAnimationFrame callbacks. It seems ergonomic to provide APIs to explicitly query this info, similar to other [screen](https://developer.mozilla.org/en-US/docs/Web/API/Window/screen) properties.
+A few cases which are somewhat related to this area but not necessary to address in this proposal itself are outlined below:
+
+* The current proposal has no impact on the rate of requestAnimationFrame callbacks dispatched on worker threads, for instance with an offscreen canvas.
+
+* The web also lacks APIs for a developer to query the refresh rate capabilities of the user's physical display. The most common way to infer this is by observing the rate of requestAnimationFrame callbacks. It seems ergonomic to provide APIs to explicitly query this info, similar to other [screen](https://developer.mozilla.org/en-US/docs/Web/API/Window/screen) properties.
 
 ## References
 The API proposed here draws heavily from similar APIs on other platforms including the [preferredFramesPerSecond](https://developer.apple.com/documentation/quartzcore/cadisplaylink/1648421-preferredframespersecond) property on Mac and [setFrameRate](https://developer.android.com/ndk/reference/group/a-native-window#anativewindow_setframerate) API on Android.
