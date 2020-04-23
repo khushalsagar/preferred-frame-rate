@@ -17,39 +17,21 @@ The above methods can allow the page to control the rate of updates driven solel
 The API being proposed here is as follows:
 
 ```javascript
-window.setPreferredFrameRate(30, "lower");
+window.setPreferredAnimationFrameRate(30, "lower");
 ```
 
 The API allows the developer to provide 2 parameters to indicate their frame rate preference:
 
-* The first is an int specifying the preferred frame rate value. A value of 0 implies that the desired frame rate is the max value supported by the display. This value is capped at the maximum refresh rate supported by the display.
+* The first is an int specifying the preferred frame rate value. A value of 0 implies that the desired frame rate is the max value supported by the display. This value is capped at the maximum refresh rate supported by the display. There should likely be a minimum acceptable value but that is TBD at this point.
+
 * The second parameter is a string with 2 possible values: "lower" or "higher". It specifies whether the browser should pick a lower or higher value than the provided rate if using the exact value is not possible. This is needed because the actual frame rate chosen by the browser could depend on multiple factors including the refresh rates supported by the physical display and the preferred frame rate of other content sources animating onscreen. This means that it may not be optimal to animate the page content at the exact provided rate and it needs to be adjusted.
 
-Once a preference is specified, the browser will schedule rendering lifecycle updates in response to DOM mutations and dispatch of requestAnimationFrame at a rate as close as possible to the specified rate. But it is important to note that this is a performance hint and not a guarantee.
+Once a preference is specified, the browser will dispatch requestAnimationFrame callbacks at a rate as close as possible to the specified rate. The browser may also use this as a performance hint to change the rate at which updates to the DOM outside of requestAnimationFrame are painted, but the behaviour for that case is undefined. The page should prefer using requestAnimationFrame to ensure a consistent frame rate for all script driven animations.
 
 ## Impact on Other Animations
-While the primary use-case of this API is to change the rate of updates for animations driven completely by script (requestAnimationFrame/timers), a tricky design choice is how this should impact other browser driven animations. The set of such animations can be broadly divided into the following 2 categories:
+The use of this API should not have an impact on other browser driven animations. This includes declarative animations like [css animations](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations), animated images, videos, etc. In such cases, the frame rate is already known through the metadata associated with each of these animations. For instance the rate of a css animation can be controlled using a [steps](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timing-function) timing function.
 
-### Declarative Animations
-This includes cases like [css animations](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations), animated images, videos, etc. Fundamentally these are cases where the animation is setup by the page but it is driven by the browser. In such cases, the frame rate is already known through the metadata associated with each of these animations. For instance the rate of a css animation can be controlled using a [steps](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timing-function) timing function.
-
-Its not obvious whether updates for these animations should also be throttled, if the preferred frame rate specified by the page is lower than the intrinsive frame rate of these animations. But applying the preferred interval uniformly for these animations seems like the reasonable choice for 2 reasons:
-
-* Decoupling an update to the DOM from a timer task vs a css animation may not be possible. For instance if ticking the animation mutates the same data structures as the DOM update. This means that a repaint for the css animation update is bound to display any changes made by script so far.
-
-* We could still throttle the dispatch of requestAnimationFrame callbacks while ticking the declarative animation at its instrinsic rate. But there don't seem to be any optimization opportunities for a use-case like this that would justify the implementation complexity involved. It is important to note that not supporting this use-case is not a functional limitation, the page can still use existing mechanisms to simultaneously perform script driven and declarative animations at a different rate.
-
-### Input Gestures
-This includes input gestures which are processed by the browser, primarily scrolling/pinch zoom. It is likely that in most cases where this API is used, the intent would not be to throttle the frame rate for these gestures. This makes it tricky to decide how this preference should impact processing of these gestures. A few considerations are mentioned below:
-
-* Assume that it should never apply during an input gesture and fallback to the default behaviour. This would generally mean that all animations start getting ticked at the max refresh rate.
-
-* Assume that it should always apply. The page needs to register event handlers to remove the preference if it is not desirable to throttle the rate of these animations. This seems less preferable since it could increase the latency of gesture start. Its also not clear how easy it is to observe all browser driven gestures from script (like pinch-zoom, double tap zoom, etc.)
-
-* Provide an additional option in the API to let the page specify their preference. This seems like the most flexible option.
-
-However, one aspect of this case is similar to the declarative animations case, the preference should apply uniformly to all animations on the page for the same reasons as mentioned above.
-
+Similarly this preference does not apply to the frame rate of input gestures processed by the browser, such as scrolling, pinch zoom, etc.
 
 ## Non Goals
 A few cases which are somewhat related to this area but not necessary to address in this proposal itself are outlined below:
