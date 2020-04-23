@@ -31,12 +31,12 @@ Once a preference is specified, the browser will dispatch requestAnimationFrame 
 ## Impact on Other Animations
 While the primary use-case of this API is to specify the rate of updates for animations driven completely by script using requestAnimationFrame, its important to clarify the impact of this setting on other browser driven animations. The set of such animations can be broadly divided into the following 2 categories:
 
-#### Declarative Animations
+### Declarative Animations
 This includes cases like [css animations](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations), animated images, videos, etc. Fundamentally these are cases where the animation is setup by the page but it is driven by the browser. In such cases, the frame rate is already known through the metadata associated with each of these animations. For instance the rate of a css animation can be controlled using a [steps](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timing-function) timing function.
 
 Its not obvious whether updates for these animations should also be throttled, if the preferred frame rate specified by the page is lower than the intrinsive frame rate of these animations. But it seems reasonable to consider this scenario as undefined behaviour, the page shouldn't specify a preferred frame rate that would throttle other declarative animations it sets. The only use-case where this is relevant is if the page needs to do a script based animation at a lower rate than a declarative animation simultaneously. And it doesn't look like specifying a lower preferred rate would provide any optimization opportunities that would justify the implementation complexity involved.
 
-#### Input Gestures
+### Input Gestures
 This preference should not apply to the frame rate of input gestures processed by the browser, such as scrolling, pinch zoom, etc. The common default behaviour is to animate these gestures at the display's maximum refresh rate, which also tends to be the rate at which associated event handlers are dispatched. If the page wants to render in response to these events at the same rate, the recommended behaviour is to remove the frame rate preference for the duration of the gesture to ensure requestAnimationFrame callbacks are dispatched at the same rate.
 
 ## Non Goals
