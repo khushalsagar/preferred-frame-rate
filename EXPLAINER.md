@@ -17,7 +17,7 @@ The above methods can allow the page to control the rate of updates driven solel
 The API being proposed here is as follows:
 
 ```javascript
-window.setPreferredAnimationFrameRate(30, "lower");
+window.setPreferredFrameRate(30, "lower");
 ```
 
 The API allows the developer to provide 2 parameters to indicate their frame rate preference:
@@ -26,18 +26,12 @@ The API allows the developer to provide 2 parameters to indicate their frame rat
 
 * The second parameter is a string with 2 possible values: "lower" or "higher". It specifies whether the browser should pick a lower or higher value than the provided rate if using the exact value is not possible. This is needed because the actual frame rate chosen by the browser could depend on multiple factors including the refresh rates supported by the physical display and the preferred frame rate of other content sources animating onscreen. This means that it may not be optimal to animate the page content at the exact provided rate and it needs to be adjusted.
 
-Once a preference is specified, the browser will dispatch requestAnimationFrame callbacks at a rate as close as possible to the specified rate. The browser may also use this as a performance hint to change the rate at which updates to the DOM outside of requestAnimationFrame are painted, but the behaviour for that case is undefined. The page should prefer using requestAnimationFrame to ensure a consistent frame rate for all script driven animations.
+Once a preference is specified, the browser will provide [rendering opportunities](https://html.spec.whatwg.org/multipage/webappapis.html#rendering-opportunity) to the page at a rate as close as possible to the specified rate. 
 
-## Impact on Other Animations
-While the primary use-case of this API is to specify the rate of updates for animations driven completely by script using requestAnimationFrame, its important to clarify the impact of this setting on other browser driven animations. The set of such animations can be broadly divided into the following 2 categories:
+## Impact on Threaded Animations
+While the primary use-case of this API is to specify the rate of updates for animations driven completely by script (requestAnimationFrame/timers), its important to clarify the impact of this setting on animations which can be updated outside the [window event loop](https://html.spec.whatwg.org/multipage/webappapis.html#concept-agent-event-loop). This broadly includes declarative animations such as a transform [css animation](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations), animated images, videos and browser initiated animations in response to user gestures such as scrolling, pinch-zoom, double tap zoom etc. The browser may perform these on a different thread for performance reasons.
 
-### Declarative Animations
-This includes cases like [css animations](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations), animated images, videos, etc. Fundamentally these are cases where the animation is setup by the page but it is driven by the browser. In such cases, the frame rate is already known through the metadata associated with each of these animations. For instance the rate of a css animation can be controlled using a [steps](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timing-function) timing function.
-
-Its not obvious whether updates for these animations should also be throttled, if the preferred frame rate specified by the page is lower than the intrinsive frame rate of these animations. But it seems reasonable to consider this scenario as undefined behaviour, the page shouldn't specify a preferred frame rate that would throttle other declarative animations it sets. The only use-case where this is relevant is if the page needs to do a script based animation at a lower rate than a declarative animation simultaneously. And it doesn't look like specifying a lower preferred rate would provide any optimization opportunities that would justify the implementation complexity involved.
-
-### Input Gestures
-This preference should not apply to the frame rate of input gestures processed by the browser, such as scrolling, pinch zoom, etc. The common default behaviour is to animate these gestures at the display's maximum refresh rate, which also tends to be the rate at which associated event handlers are dispatched. If the page wants to render in response to these events at the same rate, the recommended behaviour is to remove the frame rate preference for the duration of the gesture to ensure requestAnimationFrame callbacks are dispatched at the same rate.
+The developer intent with using this API may or may not be to throttle these threaded animations, particularly the ones triggered in response to user input. Ideally this should be a preference that the developer can specify but its unclear how it should be exposed by the API given that threaded animations are largely a browser implementation detail. If threaded animations are not throttled, the behaviour for whether an animation is throttled or not could also be inconsistent across browsers.
 
 ## Non Goals
 A few cases which are somewhat related to this area but not necessary to address in this proposal itself are outlined below:
