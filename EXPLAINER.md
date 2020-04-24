@@ -18,23 +18,28 @@ The API being proposed here is as follows:
 
 ```javascript
 window.setPreferredFrameRate(30, "lower");
+window.clearPreferredFrameRate();
 ```
 
 The API allows the developer to provide 2 parameters to indicate their frame rate preference:
 
-* The first is an int specifying the preferred frame rate value. A value of 0 implies no preference, which is equivalent to not using this API. This value is capped at the maximum refresh rate supported by the display. There should likely be a minimum acceptable value but that is TBD at this point.
+* The first is an int specifying the preferred frame rate value in frames per second. This value is capped at the maximum refresh rate supported by the display. There should likely be a minimum acceptable value but that is TBD at this point.
 
 * The second parameter is a string with 2 possible values: "lower" or "higher". It specifies whether the browser should pick a lower or higher value than the provided rate if using the exact value is not possible. This is needed because the actual frame rate chosen by the browser could depend on multiple factors including the refresh rates supported by the physical display and the preferred frame rate of other content sources animating onscreen. This means that it may not be optimal to animate the page content at the exact provided rate and it needs to be adjusted.
+
+* The clearPreferredFrameRate API allows the developer to remove this setting, which is equivalent to never having called setPreferredFrameRate.
 
 Once a preference is specified, the browser will provide [rendering opportunities](https://html.spec.whatwg.org/multipage/webappapis.html#rendering-opportunity) to the page at a rate as close as possible to the specified rate, which includes dispatch of requestAnimationFrame callbacks.
 
 ## Threaded Animations
 While the primary use-case of this API is to specify the rate of updates for animations driven completely by script (requestAnimationFrame/timers), its important to clarify the impact of this setting on animations which can be updated outside the [window event loop](https://html.spec.whatwg.org/multipage/webappapis.html#concept-agent-event-loop). This broadly includes declarative animations such as a transform [css animation](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations), animated images, videos and browser initiated animations in response to user gestures such as scrolling, pinch-zoom, double tap zoom etc. The browser may perform these on a different thread for performance reasons.
 
-The developer intent with using this API may or may not be to throttle these threaded animations, particularly the ones triggered in response to user input. Ideally this should be a preference that the developer can specify but its unclear how it should be exposed by the API given that threaded animations are largely a browser implementation detail. If threaded animations are not throttled, the behaviour for whether an animation is throttled or not could also be inconsistent across browsers.
+The developer intent with using this API may or may not be to throttle these threaded animations, particularly the ones triggered in response to user input. Ideally this should be a preference that the developer can specify but its unclear how it should be exposed by the API given that threaded animations are largely a browser implementation detail. One thing to note is that if threaded animations are not throttled (whether through developer opt-in or otherwise) the behaviour for whether an animation is throttled or not could be inconsistent across browsers.
 
 ## Browsing Contexts
 The API is a no-op if it is called from a window object which does not belong to the top level browsing context, to ensure that an embeded iframe can not change the frame rate for the page embedding it. The setting will also apply to all nested browsing contexts for this top level context.
+
+Ideally the above restrictions shouldn't be necessary but this requires the ability to independently run rendering lifecyle updates for documents in nested browsing contexts. Currently in chrome this is only possible with cross-process iframes and its not clear whether its possible to support this in other browsers at all.
 
 ## Non Goals
 A few cases which are somewhat related to this area but not necessary to address in this proposal itself are outlined below:
