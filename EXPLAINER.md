@@ -28,7 +28,7 @@ The API allows the developer to provide 2 parameters to indicate their frame rat
 
 Once a preference is specified, the browser will provide [rendering opportunities](https://html.spec.whatwg.org/multipage/webappapis.html#rendering-opportunity) to the page at a rate as close as possible to the specified rate, which includes dispatch of requestAnimationFrame callbacks.
 
-## Impact on Threaded Animations
+## Threaded Animations
 While the primary use-case of this API is to specify the rate of updates for animations driven completely by script (requestAnimationFrame/timers), its important to clarify the impact of this setting on animations which can be updated outside the [window event loop](https://html.spec.whatwg.org/multipage/webappapis.html#concept-agent-event-loop). This broadly includes declarative animations such as a transform [css animation](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations), animated images, videos and browser initiated animations in response to user gestures such as scrolling, pinch-zoom, double tap zoom etc. The browser may perform these on a different thread for performance reasons.
 
 The developer intent with using this API may or may not be to throttle these threaded animations, particularly the ones triggered in response to user input. Ideally this should be a preference that the developer can specify but its unclear how it should be exposed by the API given that threaded animations are largely a browser implementation detail. If threaded animations are not throttled, the behaviour for whether an animation is throttled or not could also be inconsistent across browsers.
