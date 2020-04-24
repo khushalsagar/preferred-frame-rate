@@ -33,6 +33,9 @@ While the primary use-case of this API is to specify the rate of updates for ani
 
 The developer intent with using this API may or may not be to throttle these threaded animations, particularly the ones triggered in response to user input. Ideally this should be a preference that the developer can specify but its unclear how it should be exposed by the API given that threaded animations are largely a browser implementation detail. If threaded animations are not throttled, the behaviour for whether an animation is throttled or not could also be inconsistent across browsers.
 
+## Browsing Contexts
+The API is a no-op if it is called from a window object which does not belong to the top level browsing context, to ensure that an embeded iframe can not change the frame rate for the page embedding it. The setting will also apply to all nested browsing contexts for this top level context.
+
 ## Non Goals
 A few cases which are somewhat related to this area but not necessary to address in this proposal itself are outlined below:
 
